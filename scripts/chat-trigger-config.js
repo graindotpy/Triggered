@@ -42,7 +42,7 @@ class ChatTriggerConfig extends FormApplication {
       .filter(e => e.actorId && e.triggerValue)
       .map(e => ({
         actorId: e.actorId,
-        triggerValue: e.triggerValue,
+        triggerValue: Number(e.triggerValue),
         filePath: e.filePath || '',
         macroId: e.macroId || ''
       }));
