@@ -1,5 +1,3 @@
-// modules/chat-trigger/scripts/chat-trigger-config.js
-
 class ChatTriggerConfig extends FormApplication {
   static get defaultOptions() {
     return mergeObject(super.defaultOptions, {
@@ -12,9 +10,9 @@ class ChatTriggerConfig extends FormApplication {
   }
 
   static registerHelpers() {
-    // Strict equality helper
+    // Strict equality for selected attributes
     Handlebars.registerHelper('ifEquals', (a, b, opts) => a === b ? opts.fn(this) : opts.inverse(this));
-    // Range helper to generate [1,2,…,20]
+    // Range helper generates array [start..end]
     Handlebars.registerHelper('range', (start, end) => {
       const from = Number(start);
       const to = Number(end);
@@ -24,68 +22,68 @@ class ChatTriggerConfig extends FormApplication {
     });
   }
 
-  /** Provide data to the template, parsing old‐style JSON if needed */
   async getData() {
+    // Fetch raw setting (array or string) and normalize
     const raw = game.settings.get('chat-trigger', 'triggers');
     let triggers = [];
     if (typeof raw === 'string') {
       try { triggers = JSON.parse(raw); }
       catch { triggers = []; }
-    }
-    else if (Array.isArray(raw)) {
+    } else if (Array.isArray(raw)) {
       triggers = raw;
     }
-    return { triggers, actors: game.actors.contents };
+    return {
+      triggers,
+      actors: game.actors.contents
+    };
   }
 
-  /** Persist changes—skip write if cleaned array would be empty */
   async _updateObject(_event, formData) {
-    // Build a sparse array of row-objects
+    // Build structured entries
     const entries = [];
     for (const [key, value] of Object.entries(formData)) {
       const m = key.match(/^triggers\[(\d+)\]\.(\w+)$/);
       if (!m) continue;
-      const [, idx, field] = m;
+      const [_, idx, field] = m;
       entries[idx] = entries[idx] || {};
       entries[idx][field] = value;
     }
-    // Clean up and require actor + triggerValue
+    // Clean up and require actorId & triggerValue
     const cleaned = entries
       .filter(e => e.actorId && e.triggerValue)
       .map(e => ({
         actorId: e.actorId,
-        triggerValue: e.triggerValue,
+        triggerValue: Number(e.triggerValue),
         filePath: e.filePath || '',
         macroId: e.macroId || ''
       }));
+    // Prevent accidental clearing: keep old if cleaned is empty
     if (cleaned.length === 0) {
-      ui.notifications.warn('Chat Trigger: No triggers provided; keeping existing configuration.');
+      ui.notifications.warn('Chat Trigger: No valid entries—previous settings will be retained.');
       return this.close();
     }
     await game.settings.set('chat-trigger', 'triggers', cleaned);
     this.close();
   }
 
-  /** Handle the Add/Remove row buttons */
   activateListeners(html) {
     super.activateListeners(html);
     html.find('.add-row').click(() => {
       const tbody = html.find('tbody');
       const idx = tbody.children().length;
-      const actorOptions = game.actors.contents
-        .map(a => `<option value="${a.id}">${a.name}</option>`)
-        .join('');
+      const actorOptions = game.actors.contents.map(a =>
+        `<option value="${a.id}">${a.name}</option>`).join('');
       const numberOptions = Array.from({ length: 20 }, (_, i) =>
-        `<option value="${i+1}">${i+1}</option>`
-      ).join('');
-      const row = $(`
-        <tr>
-          <td><select name="triggers[${idx}].actorId"><option value="">Select Actor</option>${actorOptions}</select></td>
-          <td><select name="triggers[${idx}].triggerValue">${numberOptions}</select></td>
-          <td><input type="text" name="triggers[${idx}].filePath"  value=""></td>
-          <td><input type="text" name="triggers[${idx}].macroId"   value=""></td>
-          <td><button type="button" class="remove-row">–</button></td>
-        </tr>`);
+        `<option value="${i+1}">${i+1}</option>`).join('');
+      const row = $(
+        `<tr>
+           <td><select name="triggers[${idx}].actorId"><option value="">Select Actor</option>${actorOptions}</select></td>
+           <td><select name="triggers[${idx}].triggerValue">${numberOptions}</select></td>
+           <td><input type="text" name="triggers[${idx}].filePath" value=""></td>
+           <td><input type="text" name="triggers[${idx}].macroId"  value=""></td>
+           <td><button type="button" class="remove-row">–</button></td>
+         </tr>`
+      );
       tbody.append(row);
     });
     html.on('click', '.remove-row', ev => $(ev.currentTarget).closest('tr').remove());
@@ -93,14 +91,14 @@ class ChatTriggerConfig extends FormApplication {
 }
 
 Hooks.once('init', () => {
-  // Hidden storage for your trigger definitions
+  // Store triggers (hidden) as array
   game.settings.register('chat-trigger', 'triggers', {
     config: false,
     scope: 'world',
     type: Array,
     default: []
   });
-  // “Configure…” menu entry
+  // Add Configure menu
   game.settings.registerMenu('chat-trigger', 'configureTriggers', {
     name: 'Configure Triggers',
     label: 'Configure...',
