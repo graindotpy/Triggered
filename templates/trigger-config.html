@@ -1,0 +1,39 @@
+<form>
+    <table>
+      <thead>
+        <tr>
+          <th>Actor</th>
+          <th>Roll Value</th>
+          <th>Animation Path</th>
+          <th>Macro ID</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each triggers as |t idx|}}
+        <tr>
+          <td>
+            <select name="triggers[{{idx}}].actorId">
+              <option value="">Select Actor</option>
+              {{#each actors}}
+                <option value="{{this.id}}" {{#ifEquals this.id ../t.actorId}}selected{{/ifEquals}}>{{this.name}}</option>
+              {{/each}}
+            </select>
+          </td>
+          <td>
+            <select name="triggers[{{idx}}].triggerValue">
+              {{#each (range 1 20)}}
+                <option value="{{this}}" {{#ifEquals this ../t.triggerValue}}selected{{/ifEquals}}>{{this}}</option>
+              {{/each}}
+            </select>
+          </td>
+          <td><input type="text" name="triggers[{{idx}}].filePath" value="{{t.filePath}}"></td>
+          <td><input type="text" name="triggers[{{idx}}].macroId"  value="{{t.macroId}}"></td>
+          <td><button type="button" class="remove-row">–</button></td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    <button type="button" class="add-row">Add Trigger</button>
+    <div class="form-buttons"><button type="submit">Save Changes</button></div>
+  </form>

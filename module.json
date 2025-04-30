@@ -1,0 +1,14 @@
+{
+  "name": "chat-trigger",
+  "title": "Triggered",
+  "description": "Play animations or macros when configured d20 roll values occur in chat.",
+  "version": "1.4.1",
+  "author": "Grain",
+  "minimumCoreVersion": "10",
+  "compatibleCoreVersion": "11",
+  "scripts": [
+    "scripts/chat-trigger.js",
+    "scripts/chat-trigger-config.js"
+  ],
+  "license": "MIT"
+}
