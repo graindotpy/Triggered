@@ -2,7 +2,7 @@
   "id": "chat-trigger",
   "title": "Triggered",
   "description": "Play animations or macros when configured d20 roll values occur in chat.",
-  "version": "1.4.7",
+  "version": "1.4.8",
   "authors": [
     { "name": "Grain" }
   ],

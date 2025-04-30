@@ -23,15 +23,26 @@ class ChatTriggerConfig extends FormApplication {
   }
 
   async getData() {
+    // 1) Load & normalize what’s in Settings
     const raw = game.settings.get('chat-trigger', 'triggers');
-    let triggers = [];
-    if (typeof raw === 'string') {
-      try { triggers = JSON.parse(raw); } catch { triggers = []; }
-    } else if (Array.isArray(raw)) {
-      triggers = raw;
+    let triggers = Array.isArray(raw) ? raw : (typeof raw === 'string' ? JSON.parse(raw) : []);
+    
+    // 2) If there are none, inject a single blank row (not saved until you actually submit)
+    if (triggers.length === 0) {
+      triggers = [{
+        actorId:      "",
+        triggerValue: "1",
+        filePath:     "",
+        macroId:      ""
+      }];
     }
-    return { triggers, actors: game.actors.contents };
+  
+    return {
+      triggers,
+      actors: game.actors.contents
+    };
   }
+  
 
   async _updateObject(_event, formData) {
     const entries = [];
