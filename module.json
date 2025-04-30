@@ -6,6 +6,8 @@
   "author": "Grain",
   "minimumCoreVersion": "10",
   "compatibleCoreVersion": "11",
+  "download": "https://github.com/graindotpy/Triggered/archive/refs/heads/main.zip",
+  "manifest": "https://raw.githubusercontent.com/graindotpy/Triggered/main/module.json",
   "scripts": [
     "scripts/chat-trigger.js",
     "scripts/chat-trigger-config.js"
