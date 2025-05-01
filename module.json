@@ -8,7 +8,7 @@
   ],
   "compatibility": {
     "minimum": "10",
-    "verified": "11"
+    "verified": "13"
   },
   "url": "https://github.com/graindotpy/Triggered",
   "download": "https://github.com/graindotpy/Triggered/archive/refs/heads/main.zip",
