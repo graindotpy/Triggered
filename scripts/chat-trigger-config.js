@@ -12,14 +12,14 @@ class ChatTriggerConfig extends FormApplication {
   }
 
   static registerHelpers() {
-    // Strict-equality helper
+    // Strict-equality helper, but cast both sides to string for robust matching
     Handlebars.registerHelper('ifEquals', (a, b, opts) =>
-      a === b ? opts.fn(this) : opts.inverse(this)
+      String(a) === String(b) ? opts.fn(this) : opts.inverse(this)
     );
     // Range helper for dropdown 1–20
     Handlebars.registerHelper('range', (start, end) => {
       const from = Number(start);
-      const to = Number(end);
+      const to   = Number(end);
       return Array.from({ length: to - from + 1 }, (_, i) => from + i);
     });
   }
@@ -64,7 +64,7 @@ class ChatTriggerConfig extends FormApplication {
       entries[idx][field] = value;
     }
 
-    // Clean out incomplete rows and convert values
+    // Clean out incomplete rows and convert types
     const cleaned = entries
       .filter(e => e.actorId && e.triggerValue)
       .map(e => ({
@@ -76,7 +76,7 @@ class ChatTriggerConfig extends FormApplication {
 
     console.log('[ChatTriggerConfig] _updateObject cleaned:', cleaned);
 
-    // Prevent accidental full-clear: if cleaned is empty, warn and retain old settings
+    // Prevent accidental full-clear
     if (cleaned.length === 0) {
       ui.notifications.warn('Chat Trigger: No valid entries—previous settings retained.');
       return this.close();
@@ -90,22 +90,29 @@ class ChatTriggerConfig extends FormApplication {
   activateListeners(html) {
     super.activateListeners(html);
     html.find('.add-row').click(() => {
-      const tbody = html.find('tbody');
-      const idx   = tbody.children().length;
+      const tbody        = html.find('tbody');
+      const idx          = tbody.children().length;
       const actorOptions = game.actors.contents
-        .map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+        .map(a => `<option value="${a.id}">${a.name}</option>`)
+        .join('');
       const numberOptions = Handlebars.helpers.range(1, 20)
-        .map(n => `<option value="${n}">${n}</option>`).join('');
+        .map(n => `<option value="${n}">${n}</option>`)
+        .join('');
       const row = $(`
         <tr>
-          <td><select name="triggers[${idx}].actorId">
-                <option value="">Select Actor</option>${actorOptions}
-              </select></td>
-          <td><select name="triggers[${idx}].triggerValue">
-                ${numberOptions}
-              </select></td>
-          <td><input type="text" name="triggers[${idx}].filePath" value=""></td>
-          <td><input type="text" name="triggers[${idx}].macroId"  value=""></td>
+          <td>
+            <select name="triggers[${idx}].actorId">
+              <option value="">Select Actor</option>
+              ${actorOptions}
+            </select>
+          </td>
+          <td>
+            <select name="triggers[${idx}].triggerValue">
+              ${numberOptions}
+            </select>
+          </td>
+          <td><input type="text" name="triggers[${idx}].filePath"  value=""></td>
+          <td><input type="text" name="triggers[${idx}].macroId"   value=""></td>
           <td><button type="button" class="remove-row">–</button></td>
         </tr>`);
       tbody.append(row);
