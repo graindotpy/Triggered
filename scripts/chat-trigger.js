@@ -2,70 +2,56 @@
 
 Hooks.once('init', () => {
   console.log('Chat Trigger | init');
-  Hooks.on('createChatMessage', async (message, options, userId) => {
-    console.log('Chat Trigger | createChatMessage fired', {
-      isRoll:  message.isRoll,
-      rolls:   message.rolls,
-      speaker: message.speaker
-    });
+  Hooks.on('createChatMessage', async (message) => {
 
-    // 1) Skip non-roll messages
-    if (!message.isRoll) {
-      console.log('Chat Trigger | Skipping – not a roll');
-      return;
-    }
+    // Only proceed on roll messages
+    if (!message.isRoll) return;
 
-    // 2) Extract the first Roll instance
+    // Grab the first Roll instance (v12+)
     const [roll] = message.rolls;
-    if (!roll) {
-      console.log('Chat Trigger | Skipping – no rolls found');
-      return;
-    }
+    if (!roll) return;
 
-    // 3) Find the d20 term and get the raw die result
+    // Find the d20 DiceTerm
     const d20Term = roll.terms.find(t => t.faces === 20 && t.results.length);
-    if (!d20Term) {
-      console.log('Chat Trigger | No d20 term found in roll');
-      return;
-    }
-    const dieValue = d20Term.results[0].result;
-    console.log('Chat Trigger | d20 face result:', dieValue);
+    if (!d20Term) return;
 
-    // 4) Resolve the speaker’s Actor
+    // ——— Resolve the kept results exactly as Foundry does ———
+    // Each result object has either `active` (preferred) or `discarded` flags.
+    let kept = d20Term.results.filter(r => r.active === true);
+    if (kept.length === 0) {
+      // Fallback for older Foundry versions that use `discarded`
+      kept = d20Term.results.filter(r => r.discarded === false);
+    }
+    if (kept.length === 0) {
+      // If still nothing, fall back to all results (sum them)
+      kept = d20Term.results;
+    }
+    // Sum all kept face values (for 2d20kh this is the single highest die,
+    // for 2d20kl single lowest, for 1d20 just that one, etc.)
+    const dieValue = kept.reduce((sum, r) => sum + r.result, 0);
+    console.log('Chat Trigger | Resolved d20 value:', dieValue);
+    // ————————————————————————————————————————————————
+
+    // Resolve the speaker’s Actor
     const speakerActor = ChatMessage.getSpeakerActor(message.speaker);
-    if (!speakerActor) {
-      console.log('Chat Trigger | No actor for speaker', message.speaker);
-      return;
-    }
+    if (!speakerActor) return;
 
-    // 5) Find the matching Token on the canvas
-    const tokenId = message.speaker.token;
-    const token   = canvas.tokens.get(tokenId)
-                   ?? canvas.tokens.placeables.find(t => t.actor?.id === speakerActor.id);
-    if (!token) {
-      console.log('Chat Trigger | No token found for actor on canvas');
-      return;
-    }
+    // Find their Token on the canvas
+    const token = canvas.tokens.get(message.speaker.token)
+                ?? canvas.tokens.placeables.find(t => t.actor?.id === speakerActor.id);
+    if (!token) return;
 
-    // 6) Load your configured triggers
+    // Load your configured triggers
     const triggers = game.settings.get('chat-trigger', 'triggers') || [];
     console.log('Chat Trigger | Loaded triggers:', triggers);
 
-    // 7) Check each trigger for actorId + dieValue match
+    // Check each trigger and fire when actor + dieValue match
     for (const t of triggers) {
-      console.log('Chat Trigger | Checking trigger', t);
-      if (t.actorId !== speakerActor.id) {
-        console.log('Chat Trigger | Actor ID mismatch', t.actorId, speakerActor.id);
-        continue;
-      }
-      if (Number(t.triggerValue) !== dieValue) {
-        console.log('Chat Trigger | Roll value mismatch', t.triggerValue, dieValue);
-        continue;
-      }
-
+      if (t.actorId !== speakerActor.id) continue;
+      if (Number(t.triggerValue) !== dieValue) continue;
       console.log('Chat Trigger | Trigger match!');
 
-      // 8a) Play animation if provided
+      // Play an animation if provided
       if (t.filePath) {
         new Sequence()
           .effect()
@@ -74,14 +60,11 @@ Hooks.once('init', () => {
           .play();
       }
 
-      // 8b) Execute macro if provided
+      // Execute a Macro if provided
       if (t.macroId) {
         const macro = game.macros.get(t.macroId);
-        if (macro) {
-          await macro.execute();
-        } else {
-          ui.notifications.warn(`Chat Trigger | Macro ${t.macroId} not found`);
-        }
+        if (macro) await macro.execute();
+        else ui.notifications.warn(`Chat Trigger | Macro ${t.macroId} not found`);
       }
     }
   });
@@ -89,8 +72,6 @@ Hooks.once('init', () => {
 
 Hooks.once('ready', () => {
   console.log(
-    `Chat Trigger | ready (Foundry v${game.version}, Sequencer v${
-      game.modules.get('sequencer')?.version ?? 'N/A'
-    })`
+    `Chat Trigger | ready (Foundry v${game.version}, Sequencer v${game.modules.get('sequencer')?.version ?? 'N/A'})`
   );
 });
