@@ -1,2 +1,2 @@
 # Triggered
-Foundrry VTT Module
+![Chat Trigger Configuration UI](./assets/TRIGGERED!.png)
