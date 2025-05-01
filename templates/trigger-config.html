@@ -2,8 +2,8 @@
   <table>
     <thead>
       <tr>
-        <th>Actor</th>
-        <th>Roll Value</th>
+        <th>Actor ID</th>
+        <th>Roll Value (1–20)</th>
         <th>Animation Path</th>
         <th>Macro ID</th>
         <th></th>
@@ -11,29 +11,41 @@
     </thead>
     <tbody>
       {{#each triggers as |t idx|}}
-      <tr>
-        <td>
-          <select name="triggers[{{idx}}].actorId">
-            <option value="">Select Actor</option>
-            {{#each actors}}
-              <option value="{{this.id}}" {{#ifEquals this.id ../t.actorId}}selected{{/ifEquals}}>{{this.name}}</option>
-            {{/each}}
-          </select>
-        </td>
-        <td>
-          <select name="triggers[{{idx}}].triggerValue">
-            {{#each (range 1 20)}}
-              <option value="{{this}}" {{#ifEquals this ../t.triggerValue}}selected{{/ifEquals}}>{{this}}</option>
-            {{/each}}
-          </select>
-        </td>
-        <td><input type="text" name="triggers[{{idx}}].filePath" value="{{t.filePath}}"></td>
-        <td><input type="text" name="triggers[{{idx}}].macroId"  value="{{t.macroId}}"></td>
-        <td><button type="button" class="remove-row">–</button></td>
-      </tr>
+        <tr>
+          <td>
+            <input type="text"
+                   name="triggers[{{idx}}].actorId"
+                   value="{{t.actorId}}"
+                   placeholder="Actor ID">
+          </td>
+          <td>
+            <input type="number"
+                   name="triggers[{{idx}}].triggerValue"
+                   value="{{t.triggerValue}}"
+                   min="1" max="20"
+                   placeholder="1–20">
+          </td>
+          <td>
+            <input type="text"
+                   name="triggers[{{idx}}].filePath"
+                   value="{{t.filePath}}"
+                   placeholder="Animation path">
+          </td>
+          <td>
+            <input type="text"
+                   name="triggers[{{idx}}].macroId"
+                   value="{{t.macroId}}"
+                   placeholder="Macro ID">
+          </td>
+          <td>
+            <button type="button" class="remove-row">–</button>
+          </td>
+        </tr>
       {{/each}}
     </tbody>
   </table>
-  <button type="button" class="add-row">Add Trigger</button>
-  <div class="form-buttons"><button type="submit">Save Changes</button></div>
+  <footer>
+    <button type="button" class="add-row">Add Trigger</button>
+    <button type="submit">Save Changes</button>
+  </footer>
 </form>
